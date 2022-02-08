@@ -1,0 +1,33 @@
+{
+  "name": "nosql-challenge-social-network-api",
+  "version": "1.0.0",
+  "description": "Social network REST API built with express and mongoose",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michael-rodriguez22/NOSQL-CHALLENGE-social-network-api.git"
+  },
+  "keywords": [
+    "Node",
+    "Express",
+    "MongoDB",
+    "Mongoose"
+  ],
+  "author": "Michael Rodriguez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/michael-rodriguez22/NOSQL-CHALLENGE-social-network-api/issues"
+  },
+  "homepage": "https://github.com/michael-rodriguez22/NOSQL-CHALLENGE-social-network-api#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.17.2",
+    "mongoose": "^6.2.1"
+  }
+}
