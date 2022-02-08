@@ -1,28 +1,23 @@
-module.exports = err => {
-  const response = {}
+module.exports = (res, err) => {
+  console.error(err)
+
   if (err.kind === "ObjectId") {
-    response.status = 400
-    response.body = {
+    return res.status(400).json({
       message: "Invalid _id value",
       _id: err.value,
-    }
+    })
   } else if (err.keyValue?.username) {
-    response.status = 400
-    response.body = {
+    return res.status(400).json({
       message: `The username "${err.keyValue.username}" is already in use`,
-    }
+    })
   } else if (err.keyValue?.email) {
-    response.status = 400
-    response.body = {
+    return res.status(400).json({
       message: `The email address "${err.keyValue.email}" is already in use`,
-    }
+    })
   } else {
-    response.status = 500
-    response.body = {
+    return res.status(500).json({
       message: "Something went wrong",
       error: err,
-    }
+    })
   }
-  console.error(err)
-  return response
 }

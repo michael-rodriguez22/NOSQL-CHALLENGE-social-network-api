@@ -15,8 +15,7 @@ const userController = {
 
       return res.json({ users: usersData })
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -41,8 +40,7 @@ const userController = {
 
       return userData ? res.json(userData) : handle404(res)
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -53,12 +51,12 @@ const userController = {
         email: body.email,
       })
 
-      return res
-        .status(201)
-        .json({ message: "New user successfully created", user: userData })
+      return res.status(201).json({
+        message: "New user successfully created",
+        user: userData,
+      })
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -84,8 +82,7 @@ const userController = {
           })
         : handle404(res)
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -104,8 +101,7 @@ const userController = {
         user: userData,
       })
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -142,8 +138,7 @@ const userController = {
           })
         : handle404(res)
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 
@@ -180,8 +175,7 @@ const userController = {
           })
         : handle404(res)
     } catch (err) {
-      const { status, body } = handleErr(err)
-      res.status(status).json(body)
+      handleErr(res, err)
     }
   },
 }
