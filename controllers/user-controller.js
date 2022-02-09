@@ -10,6 +10,10 @@ const userController = {
   async getAllUsers(req, res) {
     try {
       const usersData = await User.find({})
+        .populate({
+          path: "thoughts",
+          select: { __v: 0, timestampCreatedAt: 0, timestampUpdatedAt: 0 },
+        })
         .select({ __v: 0, createdAt: 0, updatedAt: 0 })
         .sort({ username: 1 })
 
@@ -24,7 +28,7 @@ const userController = {
       const userData = await User.findOne({ _id: params.id })
         .populate({
           path: "thoughts",
-          select: { __v: 0 },
+          select: { __v: 0, timestampCreatedAt: 0, timestampUpdatedAt: 0 },
         })
         .populate({
           path: "friends",
@@ -120,7 +124,7 @@ const userController = {
       // TODO: don't add friend if already in friends list
       const userData = await User.findOneAndUpdate(
         { _id: params.userId },
-        { $push: { friends: params.friendId } },
+        { $addToSet: { friends: params.friendId } },
         { new: true }
       ).select({
         thoughts: 0,

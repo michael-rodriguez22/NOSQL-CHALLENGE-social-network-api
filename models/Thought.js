@@ -1,11 +1,11 @@
-const { Schema, model } = require("mongoose")
+const { Schema, Mongoose, model } = require("mongoose")
 const { isValidLength, validLengthMessage, formatDate } = require("../utils")
 
 const reactionSchema = new Schema(
   {
     reactionId: {
       type: Schema.Types.ObjectId,
-      default: () => new Schema.Types.ObjectId(),
+      default: () => new Mongoose.Types.ObjectId(),
     },
 
     reactionBody: {
@@ -26,15 +26,14 @@ const reactionSchema = new Schema(
   },
   {
     timestamps: {
-      createdAt: timestampCreatedAt,
-      updatedAt: timestampUpdatedAt,
+      createdAt: "timestampCreatedAt",
+      updatedAt: "timestampUpdatedAt",
     },
     toJSON: {
       virtuals: true,
     },
     // TODO: pass id and _id options if necessary
-    // id: false ?
-    // _id: false ?
+    id: false,
   }
 )
 
@@ -67,12 +66,13 @@ const thoughtSchema = new Schema(
   },
   {
     timestamps: {
-      createdAt: timestampCreatedAt,
-      updatedAt: timestampUpdatedAt,
+      createdAt: "timestampCreatedAt",
+      updatedAt: "timestampUpdatedAt",
     },
     toJSON: {
       virtuals: true,
     },
+    id: false,
   }
 )
 
@@ -84,7 +84,9 @@ thoughtSchema
   .virtual("updatedAt")
   .get(() => formatDate(this.timestampUpdatedAt))
 
-thoughtSchema.virtual("reactionCount").get(() => this.reactions.length)
+thoughtSchema.virtual("reactionCount").get(function () {
+  this.reactions ? this.reactions.length : 0
+})
 
 const Thought = new model("Thought", thoughtSchema)
 
