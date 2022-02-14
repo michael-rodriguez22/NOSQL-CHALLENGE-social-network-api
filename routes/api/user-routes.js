@@ -3,7 +3,7 @@ const router = require("express").Router(),
     getAllUsers,
     getUserById,
     createUser,
-    updateUser,
+    updateUserInfo,
     deleteUser,
     addFriend,
     removeFriend,
@@ -11,8 +11,10 @@ const router = require("express").Router(),
 
 router.route("/").get(getAllUsers).post(createUser)
 
-router.route("/:id").get(getUserById).put(updateUser).delete(deleteUser)
+router.route("/:id").get(getUserById).put(updateUserInfo).delete(deleteUser)
 
-router.route("/:userId/friends/:friendId").post(addFriend).delete(removeFriend)
+router.put("/:userId/add-friend/:friendId", addFriend)
+
+router.put("/:userId/remove-friend/:friendId", removeFriend)
 
 module.exports = router

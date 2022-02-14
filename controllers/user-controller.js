@@ -1,187 +1,155 @@
-const { User } = require("../models"),
-  { handleUserControllerErrors } = require("../utils"),
-  handleErr = handleUserControllerErrors
+const asyncHandler = require("express-async-handler")
+const { User } = require("../models")
 
-const handle404 = (res, message = "No user was found with this id") => {
-  return res.status(404).json({ message })
+const notFound = resource => `No ${resource} was found with this id`
+
+// method GET
+// route  /api/users
+const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({}).sort({ username: 1 })
+  return res.status(200).json(users)
+})
+
+// method GET
+// route  /api/users/:id
+const getUserById = asyncHandler(async ({ params }, res) => {
+  const user = await User.findById(params.id)
+    .populate({ path: "thoughts" })
+    .populate({ path: "friends" })
+
+  if (!user) {
+    res.status(404)
+    throw new Error(notFound("user"))
+  }
+
+  return res.status(200).json(user)
+})
+
+// method POST
+// route  /api/users
+const createUser = asyncHandler(async ({ body }, res) => {
+  const { username, email } = body
+
+  if (!username || !email) {
+    res.status(400)
+    throw new Error("Username and email are required")
+  }
+
+  const isTaken = await User.find({ $or: [{ username }, { email }] })
+
+  if (isTaken[0]) {
+    res.status(400)
+    throw isTaken[0].username === username
+      ? new Error("That username is already in use")
+      : new Error("That email address is already in use")
+  }
+
+  const user = await User.create({ username, email })
+
+  return res.status(201).json(user)
+})
+
+// method PUT
+// route  /api/users/:id
+const updateUserInfo = asyncHandler(async ({ params, body }, res) => {
+  const { username, email } = body
+
+  if (!username && !email) {
+    res.status(400)
+    throw new Error("New username or email are required to update profile info")
+  }
+
+  const user = await User.findById(params.id)
+
+  if (!user) {
+    res.status(404)
+    throw new Error(notFound("user"))
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { id: user.id },
+    { username, email },
+    { new: true }
+  )
+
+  return res.status(200).json(updatedUser)
+})
+
+// method DELETE
+// route  /api/users/:id
+const deleteUser = asyncHandler(async ({ params }, res) => {
+  const user = await User.findById(params.id)
+
+  if (!user) {
+    res.status(404)
+    throw new Error(notFound("user"))
+  }
+
+  await user.remove()
+
+  return res.status(200).json({ message: "User successfully deleted", user })
+})
+
+// method PUT
+// route  /api/users/:userId/add-friend/:friendId
+const addFriend = asyncHandler(async ({ params }, res) => {
+  // TODO: Only add friend if not currently in user's friends list
+  const friend = await User.findById(params.friendId)
+
+  if (!friend) {
+    res.status(404)
+    throw new Error(notFound("friend"))
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: params.userId },
+    { $addToSet: { friends: params.friendId } },
+    { new: true }
+  )
+
+  if (!updatedUser) {
+    res.status(404)
+    throw new Error(notFound("user"))
+  }
+
+  return res.status(200).json({
+    message: "Friend successfully added to user's friends list",
+    friend: {
+      _id: friend._id,
+      username: friend.username,
+    },
+    user: updatedUser,
+  })
+})
+
+// method PUT
+// route  /api/users/:userId/remove-friend/:friendId
+const removeFriend = asyncHandler(async ({ params }, res) => {
+  // TODO: only remove friend if currently in user's friends list
+  const updatedUser = await User.findOneAndUpdate(
+    { _id: params.userId },
+    { $pull: { friends: params.friendId } },
+    { new: true }
+  )
+
+  if (!updatedUser) {
+    res.status(404)
+    throw new Error(notFound("user"))
+  }
+
+  return res.status(200).json({
+    message: "Friend successfully removed from user's friends list",
+    friend: { _id: params.friendId },
+    user: updatedUser,
+  })
+})
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUserInfo,
+  deleteUser,
+  addFriend,
+  removeFriend,
 }
-
-const userController = {
-  async getAllUsers(req, res) {
-    try {
-      const usersData = await User.find({})
-        .populate({
-          path: "thoughts",
-          select: { __v: 0, timestampCreatedAt: 0, timestampUpdatedAt: 0 },
-        })
-        .select({ __v: 0, createdAt: 0, updatedAt: 0 })
-        .sort({ username: 1 })
-
-      return res.json({ users: usersData })
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async getUserById({ params }, res) {
-    try {
-      const userData = await User.findOne({ _id: params.id })
-        .populate({
-          path: "thoughts",
-          select: { __v: 0, timestampCreatedAt: 0, timestampUpdatedAt: 0 },
-        })
-        .populate({
-          path: "friends",
-          select: {
-            thoughts: 0,
-            email: 0,
-            __v: 0,
-            createdAt: 0,
-            updatedAt: 0,
-          },
-        })
-        .select({ __v: 0 })
-
-      return userData ? res.json(userData) : handle404(res)
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async createUser({ body }, res) {
-    try {
-      const userData = await User.create({
-        username: body.username,
-        email: body.email,
-      })
-
-      return res.status(201).json({
-        message: "New user successfully created",
-        user: userData,
-      })
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async updateUser({ params, body }, res) {
-    const payload = {}
-    if (body.username) payload.username = body.username
-    if (body.email) payload.email = body.email
-    try {
-      const userData = await User.findOneAndUpdate(
-        { _id: params.id },
-        payload,
-        {
-          new: true,
-          runValidators: true,
-          context: "query",
-        }
-      ).select({ __v: 0 })
-
-      return userData
-        ? res.json({
-            message: "This user's information was successfully updated",
-            user: userData,
-          })
-        : handle404(res)
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async deleteUser({ params }, res) {
-    try {
-      const userData = await User.findOneAndDelete({ _id: params.id }).select({
-        __v: 0,
-      })
-
-      if (!userData) return handle404(res)
-
-      // TODO: delete all associated thoughts and cascade delete from friends lists
-      return res.json({
-        message:
-          "This user has been successfully deleted (TODO: delete all associated thoughts and cascade delete from friends lists)",
-        user: userData,
-      })
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async addFriend({ params }, res) {
-    try {
-      const friendData = await User.findOne({ _id: params.friendId }).select({
-        thoughts: 0,
-        __v: 0,
-        createdAt: 0,
-        updatedAt: 0,
-      })
-
-      if (!friendData)
-        return handle404(res, "The friend you are trying to add was not found")
-
-      // TODO: don't add friend if already in friends list
-      const userData = await User.findOneAndUpdate(
-        { _id: params.userId },
-        { $addToSet: { friends: params.friendId } },
-        { new: true }
-      ).select({
-        thoughts: 0,
-        __v: 0,
-        createdAt: 0,
-        updatedAt: 0,
-      })
-
-      return userData
-        ? res.json({
-            message:
-              "This friend has been successfully added to this user's friends list",
-            friend: friendData,
-            user: userData,
-          })
-        : handle404(res)
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-
-  async removeFriend({ params }, res) {
-    try {
-      // TODO: return 404 if friend is not in user's friends list
-      const userData = await User.findOneAndUpdate(
-        { _id: params.userId },
-        { $pull: { friends: params.friendId } },
-        { new: true }
-      )
-        .populate({
-          path: "friends",
-          select: {
-            thoughts: 0,
-            email: 0,
-            __v: 0,
-            createdAt: 0,
-            updatedAt: 0,
-          },
-        })
-        .select({
-          thoughts: 0,
-          __v: 0,
-          createdAt: 0,
-          updatedAt: 0,
-        })
-
-      return userData
-        ? res.json({
-            message:
-              "This friend has been successfully removed from this user's friends list",
-            user: userData,
-          })
-        : handle404(res)
-    } catch (err) {
-      handleErr(res, err)
-    }
-  },
-}
-
-module.exports = userController

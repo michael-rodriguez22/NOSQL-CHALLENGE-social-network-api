@@ -1,6 +1,3 @@
-const handleUserControllerErrors = require("./handle-user-controller-errors"),
-  handleThoughtControllerErrors = require("./handle-thought-controller-errors")
-
 const isEmail = email => /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/.test(email)
 
 const isValidLength = string => string.length > 0 && string.length < 280
@@ -16,6 +13,4 @@ module.exports = {
   isValidLength,
   validLengthMessage,
   formatDate,
-  handleUserControllerErrors,
-  handleThoughtControllerErrors,
 }

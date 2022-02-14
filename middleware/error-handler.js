@@ -1,13 +1,17 @@
-module.exports = (err, req, res) => {
+module.exports = (err, req, res, next) => {
   const status = res.statusCode === 200 ? 500 : res.statusCode
   const body = { message: err.message }
 
-  console.error(`\nError: ${err.message}`.red.bold)
-
-  if (proccess.env.NODE_ENV !== "production") {
-    body.stack = err.stack
-    console.error(err.stack.red)
+  if (err.code === 11000) {
+    console.log(err)
+    return res.json(err)
   }
 
-  res.status(status).json(body)
+  console.log(`\nError: ${body.message}`.red.bold)
+  if (process.env.NODE_ENV !== "production") {
+    body.stack = err.stack
+    console.log(body.stack.grey)
+  }
+
+  return res.status(status).json(body)
 }

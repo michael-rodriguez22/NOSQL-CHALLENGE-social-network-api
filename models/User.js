@@ -1,11 +1,10 @@
 const { Schema, model } = require("mongoose")
-const { isEmail } = require("../utils")
+const { isEmail, formatDate } = require("../utils")
 
 const userSchema = new Schema(
   {
     username: {
       type: String,
-      unique: true,
       required: true,
       trim: true,
     },
@@ -53,6 +52,7 @@ const userSchema = new Schema(
     timestamps: true,
     toJSON: {
       virtuals: true,
+      getters: true,
     },
     id: false,
   }
