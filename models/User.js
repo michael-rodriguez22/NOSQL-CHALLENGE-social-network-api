@@ -32,6 +32,22 @@ const userSchema = new Schema(
         default: [],
       },
     ],
+
+    createdAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
+
+    updatedAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
   },
   {
     timestamps: true,

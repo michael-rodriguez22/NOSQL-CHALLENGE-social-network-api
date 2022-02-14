@@ -23,27 +23,31 @@ const reactionSchema = new Schema(
       ref: "User",
       required: true,
     },
+
+    createdAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
+
+    updatedAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
   },
   {
-    timestamps: {
-      createdAt: "timestampCreatedAt",
-      updatedAt: "timestampUpdatedAt",
-    },
+    timestamps: true,
     toJSON: {
       virtuals: true,
+      getters: true,
     },
-    // TODO: pass id and _id options if necessary
-    id: false,
   }
 )
-
-reactionSchema
-  .virtual("createdAt")
-  .get(() => formatDate(this.timestampCreatedAt))
-
-reactionSchema
-  .virtual("updatedAt")
-  .get(() => formatDate(this.timestampUpdatedAt))
 
 const thoughtSchema = new Schema(
   {
@@ -63,26 +67,31 @@ const thoughtSchema = new Schema(
     },
 
     reactions: [reactionSchema],
+
+    createdAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
+
+    updatedAt: {
+      type: Date,
+      get: timestamp => ({
+        timestamp,
+        formatted: formatDate(timestamp),
+      }),
+    },
   },
   {
-    timestamps: {
-      createdAt: "timestampCreatedAt",
-      updatedAt: "timestampUpdatedAt",
-    },
+    timestamps: true,
     toJSON: {
       virtuals: true,
+      getters: true,
     },
-    id: false,
   }
 )
-
-thoughtSchema
-  .virtual("createdAt")
-  .get(() => formatDate(this.timestampCreatedAt))
-
-thoughtSchema
-  .virtual("updatedAt")
-  .get(() => formatDate(this.timestampUpdatedAt))
 
 thoughtSchema.virtual("reactionCount").get(function () {
   this.reactions ? this.reactions.length : 0
