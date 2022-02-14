@@ -1,22 +1,30 @@
+require("colors")
 require("dotenv").config()
 const express = require("express")
 const mongoose = require("mongoose")
 
 const app = express()
-const PORT = process.env.PORT || 3003
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(require("./routes"))
+app.use(require("./middleware/error-handler"))
 
-mongoose
-  .connect(
-    process.env.MONGODB_URI || "mongodb://localhost:27017/social-network-api"
-  )
-  .then(() => {
-    console.log("Successfully connected to mongodb")
-    app.listen(PORT, () => console.log(`Server started on port ${PORT}`))
-  })
-  .catch(err => console.error(err))
+const { MONGODB_URI, NODE_ENV = "development", PORT = 3003 } = process.env
 
-mongoose.set("debug", true)
+const connect = async () => {
+  try {
+    console.log("\nConnecting to MongoDB...".grey.bold)
+    const conn = await mongoose.connect(MONGODB_URI)
+
+    NODE_ENV !== "production" && mongoose.set("debug", true)
+    console.log(`Connection successful. DB: ${conn.connection.name}`.green.bold)
+
+    app.listen(PORT, console.log(`Server started on port ${PORT}\n`.cyan.bold))
+  } catch (err) {
+    console.error("Something went wrong\n".red.bold, err)
+    process.exit(1)
+  }
+}
+
+connect()
