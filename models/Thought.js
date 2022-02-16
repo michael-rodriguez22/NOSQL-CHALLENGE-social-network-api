@@ -41,6 +41,7 @@ const reactionSchema = new Schema(
     },
   },
   {
+    id: false,
     timestamps: true,
     toJSON: {
       virtuals: true,

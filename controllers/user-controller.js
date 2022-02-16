@@ -131,8 +131,8 @@ const removeFriend = asyncHandler(async ({ params }, res) => {
   }
 
   if (!user.friends.includes(params.friendId)) {
-    res.status(400)
-    throw new Error("That friend was not found in this user's friends list")
+    res.status(404)
+    throw new Error(notFound("friend of this user"))
   }
 
   const updatedUser = await User.findOneAndUpdate(
