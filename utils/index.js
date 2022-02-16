@@ -5,8 +5,7 @@ const isValidLength = string => string.length > 0 && string.length < 280
 const validLengthMessage = text =>
   `${text} must be between 0 and 280 characters`
 
-// TODO: return formatted date string
-const formatDate = date => "write date formatting function"
+const formatDate = timestamp => new Date(timestamp).toLocaleString()
 
 module.exports = {
   isEmail,

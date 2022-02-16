@@ -1,12 +1,12 @@
 const asyncHandler = require("express-async-handler")
 const { User } = require("../models")
 
-const notFound = resource => `No ${resource} was found with this id`
+const notFound = (resource = "user") => `No ${resource} was found with this id`
 
 // method GET
 // route  /api/users
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({}).sort({ username: 1 })
+  const users = await User.find({}).sort({ username: 1 }).select({ __v: 0 })
   return res.status(200).json(users)
 })
 
@@ -16,10 +16,11 @@ const getUserById = asyncHandler(async ({ params }, res) => {
   const user = await User.findById(params.id)
     .populate({ path: "thoughts" })
     .populate({ path: "friends" })
+    .select({ __v: 0 })
 
   if (!user) {
     res.status(404)
-    throw new Error(notFound("user"))
+    throw new Error(notFound())
   }
 
   return res.status(200).json(user)
@@ -32,16 +33,7 @@ const createUser = asyncHandler(async ({ body }, res) => {
 
   if (!username || !email) {
     res.status(400)
-    throw new Error("Username and email are required")
-  }
-
-  const isTaken = await User.find({ $or: [{ username }, { email }] })
-
-  if (isTaken[0]) {
-    res.status(400)
-    throw isTaken[0].username === username
-      ? new Error("That username is already in use")
-      : new Error("That email address is already in use")
+    throw new Error("Username and email are both required")
   }
 
   const user = await User.create({ username, email })
@@ -63,14 +55,14 @@ const updateUserInfo = asyncHandler(async ({ params, body }, res) => {
 
   if (!user) {
     res.status(404)
-    throw new Error(notFound("user"))
+    throw new Error(notFound())
   }
 
   const updatedUser = await User.findOneAndUpdate(
     { id: user.id },
     { username, email },
     { new: true }
-  )
+  ).select({ __v: 0 })
 
   return res.status(200).json(updatedUser)
 })
@@ -78,11 +70,11 @@ const updateUserInfo = asyncHandler(async ({ params, body }, res) => {
 // method DELETE
 // route  /api/users/:id
 const deleteUser = asyncHandler(async ({ params }, res) => {
-  const user = await User.findById(params.id)
+  const user = await User.findById(params.id).select({ __v: 0 })
 
   if (!user) {
     res.status(404)
-    throw new Error(notFound("user"))
+    throw new Error(notFound())
   }
 
   await user.remove()
@@ -93,7 +85,6 @@ const deleteUser = asyncHandler(async ({ params }, res) => {
 // method PUT
 // route  /api/users/:userId/add-friend/:friendId
 const addFriend = asyncHandler(async ({ params }, res) => {
-  // TODO: Only add friend if not currently in user's friends list
   const friend = await User.findById(params.friendId)
 
   if (!friend) {
@@ -101,16 +92,23 @@ const addFriend = asyncHandler(async ({ params }, res) => {
     throw new Error(notFound("friend"))
   }
 
+  const user = await User.findById(params.userId)
+
+  if (!user) {
+    res.status(404)
+    throw new Error(notFound())
+  }
+
+  if (user.friends.includes(friend._id)) {
+    res.status(400)
+    throw new Error("That friend is already in this user's friends list")
+  }
+
   const updatedUser = await User.findOneAndUpdate(
-    { _id: params.userId },
+    { _id: user._id },
     { $addToSet: { friends: params.friendId } },
     { new: true }
-  )
-
-  if (!updatedUser) {
-    res.status(404)
-    throw new Error(notFound("user"))
-  }
+  ).select({ __v: 0 })
 
   return res.status(200).json({
     message: "Friend successfully added to user's friends list",
@@ -125,17 +123,23 @@ const addFriend = asyncHandler(async ({ params }, res) => {
 // method PUT
 // route  /api/users/:userId/remove-friend/:friendId
 const removeFriend = asyncHandler(async ({ params }, res) => {
-  // TODO: only remove friend if currently in user's friends list
+  const user = await User.findById(params.userId)
+
+  if (!user) {
+    res.status(404)
+    throw new Error(notFound())
+  }
+
+  if (!user.friends.includes(params.friendId)) {
+    res.status(400)
+    throw new Error("That friend was not found in this user's friends list")
+  }
+
   const updatedUser = await User.findOneAndUpdate(
     { _id: params.userId },
     { $pull: { friends: params.friendId } },
     { new: true }
-  )
-
-  if (!updatedUser) {
-    res.status(404)
-    throw new Error(notFound("user"))
-  }
+  ).select({ __v: 0 })
 
   return res.status(200).json({
     message: "Friend successfully removed from user's friends list",
